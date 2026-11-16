@@ -1,0 +1,333 @@
+
+
+<!DOCTYPE html>
+
+<html lang="th">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>LottoLab | Malta Super5</title>
+
+<style>
+
+*{box-sizing:border-box}
+
+body{margin:0;background:#101827;color:#eef3ff;font-family:Arial,sans-serif;padding:18px}
+
+.container{max-width:760px;margin:auto}
+
+header{padding:22px 0}
+
+h1{font-size:30px;margin:0;color:#66e0bd}
+
+.sub{color:#aab7ca}
+
+.card{background:#1c293b;border:1px solid #34445c;border-radius:15px;padding:17px;margin:15px 0}
+
+h2{font-size:19px;margin:0 0 14px}
+
+input,button{font-size:16px;border-radius:9px;padding:12px;border:1px solid #52647c}
+
+input{background:#101827;color:white;width:100%;margin:5px 0 12px}
+
+button{background:#66e0bd;color:#102033;border:0;font-weight:bold;cursor:pointer}
+
+button.secondary{background:#34445c;color:white}
+
+.numbers{display:flex;flex-wrap:wrap;gap:8px}
+
+.ball{background:#263b50;border-radius:50%;width:42px;height:42px;display:grid;place-items:center;font-weight:bold}
+
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+
+.stat{background:#26374c;padding:13px;border-radius:10px}
+
+.big{font-size:23px;color:#66e0bd;font-weight:bold}
+
+.small{font-size:13px;color:#aab7ca}
+
+table{width:100%;border-collapse:collapse}
+
+td,th{text-align:left;padding:9px;border-bottom:1px solid #34445c}
+
+.note{font-size:13px;color:#aab7ca;line-height:1.6}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+
+<div class="sub">MALTA NATIONAL LOTTERY</div>
+
+<h1>◈ LottoLab</h1>
+
+<div class="sub">Super5 Statistical Analysis</div>
+
+</header>
+
+<div class="card">
+
+<h2>➕ บันทึกผล Super5</h2>
+
+<p class="small">กรอกเลข 5 ตัวที่ออกจริง แต่ละตัวต้องอยู่ระหว่าง 1–49 และห้ามซ้ำ</p>
+
+<label>วันที่ออกรางวัล</label>
+
+<input type="date" id="drawDate">
+
+<label>เลขทั้ง 5 ตัว (คั่นด้วยช่องว่างหรือจุลภาค)</label>
+
+<input id="drawNumbers" placeholder="เช่น 3, 12, 19, 27, 45">
+
+<button onclick="addDraw()">บันทึกผลรางวัล</button>
+
+</div>
+
+<div class="card">
+
+<h2>📊 ภาพรวมข้อมูล</h2>
+
+<div class="stats">
+
+<div class="stat"><div class="small">จำนวนงวดที่บันทึก</div><div class="big" id="drawCount">0</div></div>
+
+<div class="stat"><div class="small">จำนวนเลขที่วิเคราะห์</div><div class="big">49</div></div>
+
+</div>
+
+<p class="note" id="dataMessage">ยังไม่มีข้อมูลผลรางวัล กรุณาบันทึกผลจริงก่อนเริ่มวิเคราะห์</p>
+
+</div>
+
+<div class="card">
+
+<h2>🔍 ความถี่ของตัวเลข</h2>
+
+<p class="small">เรียงตามจำนวนครั้งที่พบในข้อมูลที่คุณบันทึก</p>
+
+<div id="frequency">ยังไม่มีข้อมูล</div>
+
+</div>
+
+<div class="card">
+
+<h2>🎯 Smart Number Generator</h2>
+
+<p class="small">สร้างชุดเลข 5 ตัวโดยใช้ข้อมูลความถี่และการสุ่ม</p>
+
+<button onclick="generate()">สร้างชุดเลขแนะนำ</button>
+
+<div id="suggestions" style="margin-top:15px">กดปุ่มเพื่อสร้างชุดเลข</div>
+
+<p class="note">คะแนนเป็นเพียงการจัดอันดับตามข้อมูลย้อนหลัง ไม่ได้เพิ่มโอกาสถูกรางวัลจริง ทุกชุดเลขมีโอกาสเท่ากันหากการออกรางวัลยุติธรรม</p>
+
+</div>
+
+<div class="card">
+
+<h2>📚 ประวัติผลที่บันทึก</h2>
+
+<div id="history">ยังไม่มีข้อมูล</div>
+
+<button class="secondary" onclick="exportData()">ส่งออกข้อมูล CSV</button>
+
+<button class="secondary" onclick="clearData()" style="margin-top:8px">ลบข้อมูลทั้งหมด</button>
+
+</div>
+
+<div class="card">
+
+<h2>ℹ️ เกี่ยวกับ LottoLab</h2>
+
+<p class="note">LottoLab เป็นเครื่องมือวิเคราะห์ข้อมูลสถิติ ไม่ใช่เครื่องมือทำนายผลรางวัล ความถี่ในอดีตไม่ได้รับประกันผลในอนาคต ข้อมูลทั้งหมดที่เพิ่มจะถูกเก็บไว้ในเบราว์เซอร์ของอุปกรณ์นี้</p>
+
+</div>
+
+</div>
+
+<script>
+
+let draws=[];
+
+try{draws=JSON.parse(localStorage.getItem("lottolab_draws")||"[]")}catch(e){draws=[]}
+
+document.getElementById("drawDate").value=new Date().toISOString().slice(0,10);
+
+function save(){
+
+ localStorage.setItem("lottolab_draws",JSON.stringify(draws));
+
+ render();
+
+}
+
+function parseNumbers(value){
+
+ return value.split(/[,\s]+/).filter(Boolean).map(Number);
+
+}
+
+function addDraw(){
+
+ const date=document.getElementById("drawDate").value;
+
+ const nums=parseNumbers(document.getElementById("drawNumbers").value);
+
+ if(!date){alert("กรุณาเลือกวันที่");return}
+
+ if(nums.length!==5||nums.some(n=>!Number.isInteger(n)||n<1||n>49)||new Set(nums).size!==5){
+
+  alert("กรุณากรอกเลขจำนวน 5 ตัวที่ไม่ซ้ำกัน ระหว่าง 1 ถึง 49");return;
+
+ }
+
+ if(draws.some(d=>d.date===date)){
+
+  alert("มีข้อมูลวันที่นี้แล้ว กรุณาตรวจสอบก่อน");return;
+
+ }
+
+ draws.push({date,numbers:nums.sort((a,b)=>a-b)});
+
+ draws.sort((a,b)=>a.date.localeCompare(b.date));
+
+ document.getElementById("drawNumbers").value="";
+
+ save();
+
+ alert("บันทึกผลเรียบร้อย");
+
+}
+
+function frequency(){
+
+ const f=Array(50).fill(0);
+
+ draws.forEach(d=>d.numbers.forEach(n=>f[n]++));
+
+ return f;
+
+}
+
+function render(){
+
+ document.getElementById("drawCount").textContent=draws.length;
+
+ document.getElementById("dataMessage").textContent=
+
+ draws.length?`มีข้อมูล ${draws.length} งวด เรียงตามวันที่`: "ยังไม่มีข้อมูลผลรางวัล กรุณาบันทึกผลจริงก่อนเริ่มวิเคราะห์";
+
+ const f=frequency();
+
+ const sorted=Array.from({length:49},(_,i)=>i+1).sort((a,b)=>f[b]-f[a]||a-b);
+
+ document.getElementById("frequency").innerHTML=draws.length?
+
+ `<div class="numbers">${sorted.map(n=>`<div class="stat" style="text-align:center"><b>${n}</b><br><span class="small">${f[n]} ครั้ง</span></div>`).join("")}</div>`:"ยังไม่มีข้อมูล";
+
+ document.getElementById("history").innerHTML=draws.length?
+
+ `<table><tr><th>วันที่</th><th>ผลรางวัล</th></tr>${[...draws].reverse().map(d=>`<tr><td>${d.date}</td><td>${d.numbers.join(" - ")}</td></tr>`).join("")}</table>`:"ยังไม่มีข้อมูล";
+
+}
+
+function generate(){
+
+ if(draws.length<1){alert("กรุณาบันทึกผลจริงอย่างน้อย 1 งวดก่อน");return}
+
+ const f=frequency();
+
+ const lastSeen=Array(50).fill(-1);
+
+ draws.forEach((d,i)=>d.numbers.forEach(n=>lastSeen[n]=i));
+
+ let results=[];
+
+ for(let k=0;k<10000;k++){
+
+  let nums=[];
+
+  while(nums.length<5){
+
+   let n=1+Math.floor(Math.random()*49);
+
+   if(!nums.includes(n))nums.push(n);
+
+  }
+
+  nums.sort((a,b)=>a-b);
+
+  let score=nums.reduce((s,n)=>s+f[n]*0.7+Math.max(0,draws.length-1-lastSeen[n])*0.15,0);
+
+  results.push({nums,score});
+
+ }
+
+ results.sort((a,b)=>b.score-a.score);
+
+ let chosen=[];
+
+ for(let r of results){
+
+  if(!chosen.some(x=>x.nums.join(",")===r.nums.join(",")))chosen.push(r);
+
+  if(chosen.length===5)break;
+
+ }
+
+ document.getElementById("suggestions").innerHTML=chosen.map((r,i)=>
+
+ `<div style="padding:12px;border-bottom:1px solid #34445c"><b>ชุดที่ ${i+1}</b><div class="numbers" style="margin-top:8px">${r.nums.map(n=>`<div class="ball">${n}</div>`).join("")}</div><div class="small">คะแนนจัดอันดับ ${r.score.toFixed(2)}</div></div>`
+
+ ).join("");
+
+}
+
+function exportData(){
+
+ if(!draws.length){alert("ยังไม่มีข้อมูล");return}
+
+ let csv="Date,Number1,Number2,Number3,Number4,Number5\n"+
+
+ draws.map(d=>d.date+","+d.numbers.join(",")).join("\n");
+
+ let a=document.createElement("a");
+
+ a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+
+ a.download="lottolab-results.csv";
+
+ a.click();
+
+ URL.revokeObjectURL(a.href);
+
+}
+
+function clearData(){
+
+ if(confirm("ต้องการลบข้อมูลผลรางวัลทั้งหมดใช่หรือไม่?")){
+
+  draws=[];save();
+
+  document.getElementById("suggestions").textContent="กดปุ่มเพื่อสร้างชุดเลข";
+
+ }
+
+}
+
+render();
+
+</script>
+
+</body>
+
+</html>
